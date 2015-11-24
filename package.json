@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mzabriskie/react-draggable.git"
+    "url": "git+https://github.com/Gitesoft/react-draggable.git"
   },
   "keywords": [
     "react",
