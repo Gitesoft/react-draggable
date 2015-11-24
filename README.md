@@ -1,15 +1,15 @@
-# react-draggable [![Build Status](https://travis-ci.org/mzabriskie/react-draggable.svg?branch=master)](https://travis-ci.org/mzabriskie/react-draggable)
+# React-Draggable [![Build Status](https://travis-ci.org/mzabriskie/react-draggable.svg?branch=master)](https://travis-ci.org/mzabriskie/react-draggable)
 
 A simple component for making elements draggable.
 
 [View the Changelog](CHANGELOG.md)
 
-## Demo
+### Demo
 
 [View Demo](http://mzabriskie.github.io/react-draggable/example/)
 
 
-## Installing
+### Installing
 
 ```bash
 $ npm install react-draggable
@@ -17,11 +17,12 @@ $ npm install react-draggable
 
 If you aren't using browserify/webpack, a
 [UMD version of react-draggable](dist/react-draggable.js) is available. It is updated per-release only.
+This bundle is also what is loaded when installing from npm. It expects external `React` and `ReactDOM`.
 
 If you want a UMD version of the latest `master` revision, you can generate it yourself from master by cloning this
 repository and running `$ make`. This will create umd dist files in the `dist/` folder.
 
-## Details
+## Draggable
 
 A `<Draggable>` element wraps an existing element and extends it with new event handlers and styles.
 It does not create a wrapper element in the DOM.
@@ -32,46 +33,101 @@ positioning (relative, absolute, or static). Elements can also be moved between 
 If the item you are dragging already has a CSS Transform applied, it will be overwritten by `<Draggable>`. Use
 an intermediate wrapper (`<Draggable><span>...</span></Draggable>`) in this case.
 
-## API
+
+### Draggable API
+
 The `<Draggable/>` component transparently adds draggable to whatever element is supplied as `this.props.children`.
 **Note**: Only a single element is allowed or an Error will be thrown.
 
+For the `<Draggable/>` component to correctly attach itself to its child, the child element must provide support for the following props:
+- `style` is used to give the transform css to the child.
+- `className` is used to apply the proper classes to the object being dragged.
+- `onMouseDown` is used along with onMouseUp to keep track of dragging state.
+- `onMouseUp` is used along with onMouseDown to keep track of dragging state.
+- `onTouchStart` is used along with onTouchEnd to keep track of dragging state.
+- `onTouchEnd` is used along with onTouchStart to keep track of dragging state.
+
+React.DOM elements support the above six properties by default, so you may use those elements as children without any changes. If you wish to use a React component you created, you might find [this React page](https://facebook.github.io/react/docs/transferring-props.html) helpful.
+
 Props:
 
-**`axis`**: determines which axis the draggable can move. Accepted values:
-- `both` allows movement horizontally and vertically (default).
-- `x` limits movement to horizontal axis.
-- `y` limits movement to vertical axis.
+```js
+{
+// Called when dragging starts. If `false` is returned from this method,
+// dragging will cancel.
+// These callbacks are called with the arity:
+// (event: Event,
+//  {
+//     position: {left: number, top: number},
+//     deltaX: number,
+//     deltaY: number
+//  }
+// )
+onStart: Function,
 
-**`handle`**: specifies a selector to be used as the handle that initiates drag.
+// Called while dragging.
+onDrag: Function,
 
-**`cancel`**: specifies a selector to be used to prevent drag initialization.
+// Called when dragging stops.
+onStop: Function,
 
-**`grid`**: specifies the x and y that dragging should snap to.
+// Called whenever the user mouses down. Called regardless of handle or
+//  disabled status.
+onMouseDown: Function,
 
-**`bounds`**: specifies movement boundaries. Accepted values:
-- `parent` restricts movement within the node's offsetParent (nearest node with position relative or absolute), or
-- An object with `left, top, right, and bottom` properties. These indicate how far in each direction the draggable can be moved. See [example/index.html](https://github.com/mzabriskie/react-draggable/blob/master/example/index.html) for more on this.
+// Specifies the `x` and `y` that the dragged item should start at.
+// This is generally not necessary to use (you can use absolute or relative
+// positioning of the child directly), but can be helpful for uniformity in
+// your callbacks and with css transforms.
+start: {x: number, y: number},
 
-**`start`**: specifies the `x` and `y` that the dragged item should start at. This is generally not necessary to use (you can use absolute or relative positioning of the child directly), but can be helpful for uniformity in your callbacks and with css transforms.
+// If true, will not call any drag handlers.
+disabled: boolean,
 
-**`moveOnStartChange`**: if true (it defaults false), will move the element if there is a change in `start`. We set this by default to `false` because it can cause unwanted effects if you are not aware of it.
+// Specifies a selector to be used to prevent drag initialization.
+// Example: '.body'
+cancel: string,
 
-**`zIndex`**: specifies the zIndex to use while dragging.
+// Specifies a selector to be used as the handle that initiates drag.
+// Example: '.handle'
+handle: string,
 
-**`onStart`**: called when dragging starts.
+// If set to `true`, will allow dragging on non left-button clicks.
+allowAnyClick: boolean,
 
-**`onDrag`**: called while dragging.
+// Determines which axis the draggable can move. Accepted values:
+// - `both` allows movement horizontally and vertically (default).
+// - `x` limits movement to horizontal axis.
+// - `y` limits movement to vertical axis.
+axis: string,
 
-**`onStop`**: called when dragging stops.
+// Specifies movement boundaries. Accepted values:
+// - `parent` restricts movement within the node's offsetParent
+//    (nearest node with position relative or absolute), or
+// - An object with `left, top, right, and bottom` properties.
+//   These indicate how far in each direction the draggable
+//   can be moved.
+bounds: {left: number, top: number, right: number, bottom: number} | string,
+
+// Specifies the x and y that dragging should snap to.
+grid: [number, number],
+
+// Specifies the zIndex to use while dragging.
+zIndex: number
+}
+```
 
 
-## Example usage
+Note that sending `className`, `style`, or `transform` as properties will error - set them on the child element
+directly.
+
+
+### Draggable Usage
 
 ```js
-/** @jsx React.DOM */
-var React = require('react'),
-	Draggable = require('react-draggable');
+var React = require('react'),;
+var ReactDOM = require('react-dom');
+var Draggable = require('react-draggable');
 
 var App = React.createClass({
 	handleStart: function (event, ui) {
@@ -81,12 +137,12 @@ var App = React.createClass({
 
 	handleDrag: function (event, ui) {
 		console.log('Event: ', event);
-        console.log('Position: ', ui.position);
+    console.log('Position: ', ui.position);
 	},
 
 	handleStop: function (event, ui) {
 		console.log('Event: ', event);
-        console.log('Position: ', ui.position);
+    console.log('Position: ', ui.position);
 	},
 
 	render: function () {
@@ -95,7 +151,6 @@ var App = React.createClass({
 				axis="x"
 				handle=".handle"
 				start={{x: 0, y: 0}}
-				moveOnStartChange={false}
 				grid={[25, 25]}
 				zIndex={100}
 				onStart={this.handleStart}
@@ -110,43 +165,65 @@ var App = React.createClass({
 	}
 });
 
-React.renderComponent(<App/>, document.body);
+ReactDOM.render(<App/>, document.body);
 ```
 
-## State Problems?
+## <DraggableCore>
 
-`<Draggable>` is a stateful component. This means that it is storing its current drag offsets in its internal state.
-This can cause problems with certain integrations. For example, if you change the position of the element manually,
-`<Draggable>` can get into trouble as it assumes a translation in the DOM. If you see an element jump around the page
-when you click it, this is affecting you.
+For users that require more control, a `<DraggableCore>` element is available. This is useful for more programmatic
+usage of the element. See [React-Resizable](https://github.com/STRML/react-resizable) and
+[React-Grid-Layout](https://github.com/STRML/react-grid-layout) for some examples of this.
 
-This is an unfortunate side-effect of dragging, which is inherently stateful.
+`<DraggableCore>` is a useful building block for other libraries that simply want to abstract browser-specific
+quirks and receive callbacks when a user attempts to move an element. It does not set styles or transforms
+on itself.
 
-If you move the element manually, you have two options:
+### DraggableCore API
 
-1. Feed the `<Draggable>` an `x` and `y` parameter in the `start` param, and change it as you go while setting
-`moveOnStartChange` to `true`, or,
-2. When moving the `<Draggable>`, ref the element and
-[call `resetState()`](https://github.com/STRML/react-resizable/blob/master/lib/Resizable.jsx#L48).
+`<DraggableCore>` takes all of the above `<Draggable>` options, with the exception of:
 
+* `axis`
+* `bounds`
+* `start`
+* `zIndex`
 
-## Contributing
+Drag callbacks are called with the following parameters:
+
+```js
+(
+ event: Event,
+ ui:{
+      node: Node
+      position:
+        {
+        	// lastX + deltaX === clientX
+          deltaX: number, deltaY: number,
+          lastX: number, lastY: number,
+          clientX: number, clientY: number
+        }
+    }
+)
+```
+
+----
+
+### Contributing
 
 - Fork the project
-- Run the project in development mode: `$ make dev`
+- Run the project in development mode: `$ npm run dev`
 - Make changes.
 - Add appropriate tests
-- `$ make test`
+- `$ npm test`
 - If tests don't pass, make them pass.
 - Update README with appropriate docs.
 - Commit and PR
 
-## Release checklist
+### Release checklist
 
 - Update CHANGELOG
 - `make release-patch`, `make release-minor`, or `make-release-major`
 - `make publish`
 
-## License
+### License
 
 MIT
